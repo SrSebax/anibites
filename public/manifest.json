@@ -1,0 +1,22 @@
+{
+  "name": "Anibites - Gestión de Ventas",
+  "short_name": "Anibites",
+  "description": "App kawaii para gestionar las ventas de gomitas enchiladas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF5EE",
+  "theme_color": "#FF69B4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/anibites.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "es",
+  "dir": "ltr"
+}
+
