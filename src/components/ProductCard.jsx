@@ -1,4 +1,4 @@
-import { ICONS } from '../config/icons';
+import { Check } from 'lucide-react';
 
 const ProductCard = ({ product, onSelect, selected = false }) => {
   const formatPrice = (price) => {
@@ -9,45 +9,60 @@ const ProductCard = ({ product, onSelect, selected = false }) => {
     }).format(price);
   };
 
-  const IconComponent = product.getIconComponent();
-
   return (
     <button
       onClick={() => onSelect(product)}
-      className={`w-full p-6 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+      className={`relative w-full rounded-xl transition-all duration-300 transform hover:scale-102 overflow-hidden ${
         selected
-          ? 'ring-4 ring-kawaii-rose shadow-kawaii-lg scale-105'
-          : 'shadow-lg hover:shadow-kawaii'
-      } ${product.getColor()}`}
+          ? 'ring-4 ring-kawaii-rose shadow-kawaii-lg scale-102'
+          : 'shadow-md hover:shadow-lg'
+      }`}
     >
-      <div className="text-center">
-        {/* Icono del producto */}
-        <div className="flex justify-center mb-3">
-          <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-            {IconComponent && <IconComponent size={48} className="text-white" strokeWidth={2} />}
-          </div>
+      {/* Background con gradiente */}
+      <div className={`${product.getColor()} p-5`}>
+        
+        {/* Iconos grandes arriba */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <span className="text-5xl drop-shadow-lg">{product.getIcon()}</span>
+          <span className="text-4xl drop-shadow-lg">{product.getChamoyIcon()}</span>
         </div>
 
-        {/* Nombre del producto */}
-        <h3 className="text-white font-bold text-lg mb-2">
-          {product.getSizeName()}
-        </h3>
-        <p className="text-white/90 font-medium mb-3">
-          {product.getVarietyName()}
-        </p>
+        {/* Información del producto - Jerarquía clara */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mb-3">
+          {/* Tamaño - Lo más importante */}
+          <h3 className="text-gray-800 font-bold text-xl mb-2">
+            {product.getSizeName()}
+          </h3>
+          
+          {/* Variedad */}
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-2xl">{product.getIcon()}</span>
+            <p className="text-gray-700 font-semibold text-base">
+              {product.getVarietyName()}
+            </p>
+          </div>
+          
+          {/* Sabor chamoy */}
+          <div className="flex items-center justify-center gap-2 pb-3 border-b border-gray-200">
+            <span className="text-xl">{product.getChamoyIcon()}</span>
+            <p className="text-gray-600 text-sm">
+              Chamoy {product.getChamoyFlavorName()}
+            </p>
+          </div>
 
-        {/* Precio */}
-        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3">
-          <p className="text-white text-2xl font-bold">
-            {formatPrice(product.price)}
-          </p>
+          {/* Precio destacado */}
+          <div className="mt-3">
+            <p className="text-kawaii-rose text-3xl font-bold">
+              {formatPrice(product.price)}
+            </p>
+          </div>
         </div>
 
         {/* Indicador de selección */}
         {selected && (
-          <div className="flex items-center justify-center text-white">
-            <ICONS.shopping className="mr-2" size={20} />
-            <span className="font-semibold">Seleccionado</span>
+          <div className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg py-2 px-4">
+            <Check size={20} className="text-white" strokeWidth={3} />
+            <span className="text-white font-bold text-sm">SELECCIONADO</span>
           </div>
         )}
       </div>
@@ -56,3 +71,4 @@ const ProductCard = ({ product, onSelect, selected = false }) => {
 };
 
 export default ProductCard;
+

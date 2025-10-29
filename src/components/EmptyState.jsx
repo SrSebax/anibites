@@ -1,19 +1,24 @@
 import { Link } from 'react-router-dom';
 
 const EmptyState = ({ 
-  IconComponent,
+  icon = '📦', 
   title = 'No hay datos', 
   message = 'Aún no hay información para mostrar',
   actionText,
   actionLink 
 }) => {
+  // Detectar si el icon es una ruta de imagen
+  const isImage = typeof icon === 'string' && (icon.includes('.png') || icon.includes('.jpg') || icon.includes('.svg') || icon.includes('.gif') || icon.includes('.webp'));
+
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
-      {IconComponent && (
-        <div className="mb-6 bg-gradient-to-br from-kawaii-pink/20 to-kawaii-purple/20 rounded-full p-8">
-          <IconComponent size={64} className="text-kawaii-rose" strokeWidth={1.5} />
-        </div>
-      )}
+      <div className="mb-4 animate-bounce">
+        {isImage ? (
+          <img src={icon} alt={title} className="w-24 h-24 object-contain" />
+        ) : (
+          <div className="text-8xl">{icon}</div>
+        )}
+      </div>
       <h3 className="text-2xl font-bold text-gray-700 mb-2">
         {title}
       </h3>
@@ -33,3 +38,4 @@ const EmptyState = ({
 };
 
 export default EmptyState;
+

@@ -1,4 +1,4 @@
-# 🍬 Anibites - Gestor de Ventas de Gomitas Enchiladas
+# Anibites - Gestor de Ventas de Gomitas Enchiladas
 
 <div align="center">
   <img src="public/anibites.svg" alt="Anibites Logo" width="200"/>

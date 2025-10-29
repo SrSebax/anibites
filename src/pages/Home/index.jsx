@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { StatCard, SaleCard, EmptyState } from '../../components';
+import { Plus, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { StatCard, SaleCard, EmptyState, ConfirmDialog, SuccessModal } from '../../components';
 import { SalesService } from '../../services';
-import { STAT_CARD_ICONS, ICONS, EMPTY_STATE_ICONS } from '../../config/icons';
 
 const Home = () => {
   const [todaySales, setTodaySales] = useState([]);
@@ -13,6 +13,9 @@ const Home = () => {
     monthTotal: 0,
     monthQuantity: 0
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [saleToDelete, setSaleToDelete] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -34,9 +37,16 @@ const Home = () => {
   };
 
   const handleDeleteSale = (id) => {
-    if (window.confirm('¿Estás segura de eliminar esta venta?')) {
-      SalesService.deleteSale(id);
+    setSaleToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (saleToDelete) {
+      SalesService.deleteSale(saleToDelete);
       loadData();
+      setSaleToDelete(null);
+      setShowSuccessModal(true);
     }
   };
 
@@ -54,7 +64,7 @@ const Home = () => {
         {/* Welcome Section */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-kawaii-rose to-kawaii-purple mb-2">
-            ¡Hola!
+            ¡Hola! 👋
           </h1>
           <p className="text-gray-600 text-lg">
             Bienvenida a tu panel de ventas de Anibites
@@ -67,7 +77,7 @@ const Home = () => {
             to="/nueva-venta"
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-kawaii-rose to-kawaii-purple text-white text-lg font-bold rounded-full shadow-kawaii-lg hover:shadow-kawaii transition-all duration-300 transform hover:scale-105"
           >
-            <ICONS.plus className="mr-2" size={24} />
+            <Plus className="mr-2" size={24} />
             Registrar Nueva Venta
           </Link>
         </div>
@@ -77,28 +87,28 @@ const Home = () => {
           <StatCard
             title="Ventas de Hoy"
             value={formatCurrency(stats.todayTotal)}
-            IconComponent={STAT_CARD_ICONS.todaySales}
+            icon="💰"
             color="from-green-400 to-green-600"
             subtitle={`${stats.todayQuantity} unidades vendidas`}
           />
           <StatCard
             title="Cantidad Hoy"
             value={stats.todayQuantity}
-            IconComponent={STAT_CARD_ICONS.quantity}
+            icon="📦"
             color="from-kawaii-pink to-kawaii-rose"
             subtitle={`${todaySales.length} transacciones`}
           />
           <StatCard
             title="Ventas del Mes"
             value={formatCurrency(stats.monthTotal)}
-            IconComponent={STAT_CARD_ICONS.monthSales}
+            icon="📈"
             color="from-kawaii-purple to-purple-600"
             subtitle={`${stats.monthQuantity} unidades vendidas`}
           />
           <StatCard
             title="Total Transacciones"
             value={monthSales.length}
-            IconComponent={STAT_CARD_ICONS.transactions}
+            icon="🎯"
             color="from-kawaii-rose to-pink-600"
             subtitle="Este mes"
           />
@@ -108,14 +118,14 @@ const Home = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-              <ICONS.calendar className="mr-2 text-kawaii-rose" />
+              <Calendar className="mr-2 text-kawaii-rose" />
               Ventas de Hoy
             </h2>
             <Link
               to="/calendario"
-              className="text-kawaii-rose hover:text-kawaii-purple font-semibold transition-colors flex items-center gap-1"
+              className="text-kawaii-rose hover:text-kawaii-purple font-semibold transition-colors"
             >
-              Ver Calendario <ICONS.chevronRight size={20} />
+              Ver Calendario →
             </Link>
           </div>
 
@@ -131,7 +141,7 @@ const Home = () => {
             </div>
           ) : (
             <EmptyState
-              IconComponent={EMPTY_STATE_ICONS.noSales}
+              icon="/images/sad.png"
               title="No hay ventas hoy"
               message="¡Comienza registrando tu primera venta del día!"
               actionText="Registrar Venta"
@@ -145,19 +155,16 @@ const Home = () => {
           {/* Best Selling Product */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <ICONS.trending className="mr-2 text-kawaii-rose" />
+              <TrendingUp className="mr-2 text-kawaii-rose" />
               Producto Más Vendido del Mes
             </h3>
             {(() => {
               const bestProduct = SalesService.getBestSellingProduct(monthSales);
               if (bestProduct) {
-                const IconComponent = bestProduct.product.getIconComponent();
                 return (
                   <div className="flex items-center space-x-4">
-                    <div className={`${bestProduct.product.getIconBgColor()} rounded-full p-4`}>
-                      {IconComponent && (
-                        <IconComponent size={40} className={bestProduct.product.getIconColor()} />
-                      )}
+                    <div className="text-5xl">
+                      {bestProduct.product.getIcon()}
                     </div>
                     <div className="flex-1">
                       <p className="font-bold text-lg text-gray-800">
@@ -184,7 +191,7 @@ const Home = () => {
           {/* Average Daily Sales */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <ICONS.chart className="mr-2 text-kawaii-rose" />
+              <DollarSign className="mr-2 text-kawaii-rose" />
               Promedio de Ventas Diarias
             </h3>
             <div className="text-center">
@@ -195,9 +202,34 @@ const Home = () => {
             </div>
           </div>
         </div>
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => {
+            setShowConfirmDialog(false);
+            setSaleToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="¿Eliminar venta?"
+          message="¿Estás segura de que deseas eliminar esta venta? Esta acción no se puede deshacer."
+          confirmText="Sí, eliminar"
+          cancelText="Cancelar"
+          type="danger"
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="¡Venta Eliminada!"
+          message="La venta se ha eliminado exitosamente"
+          icon="🗑️"
+        />
       </div>
     </div>
   );
 };
 
 export default Home;
+

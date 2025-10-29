@@ -1,4 +1,4 @@
-const StatCard = ({ title, value, IconComponent, color = 'from-kawaii-pink to-kawaii-purple', subtitle }) => {
+const StatCard = ({ title, value, icon, color = 'from-kawaii-pink to-kawaii-purple', subtitle }) => {
   return (
     <div className="bg-white rounded-xl shadow-lg hover:shadow-kawaii transition-all duration-300 overflow-hidden">
       <div className={`bg-gradient-to-br ${color} p-4 text-white`}>
@@ -10,11 +10,9 @@ const StatCard = ({ title, value, IconComponent, color = 'from-kawaii-pink to-ka
               <p className="text-white/80 text-xs mt-1">{subtitle}</p>
             )}
           </div>
-          {IconComponent && (
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-              <IconComponent size={32} className="text-white" strokeWidth={2} />
-            </div>
-          )}
+          <div className="text-5xl opacity-80">
+            {icon}
+          </div>
         </div>
       </div>
     </div>
@@ -22,3 +20,4 @@ const StatCard = ({ title, value, IconComponent, color = 'from-kawaii-pink to-ka
 };
 
 export default StatCard;
+

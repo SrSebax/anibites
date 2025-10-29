@@ -1,40 +1,40 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ProductCard } from '../../components';
-import { PRODUCTS_CATALOG } from '../../models';
+import { Save, ArrowLeft } from 'lucide-react';
+import { ProductCard, SuccessModal } from '../../components';
+import { PRODUCTS_CATALOG, ChamoyFlavor, ProductSize } from '../../models';
 import { SalesService } from '../../services';
-import { ICONS } from '../../config/icons';
+
+const getLocalDateTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 const New = () => {
   const navigate = useNavigate();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
+  const [date, setDate] = useState(getLocalDateTime());
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (!selectedProduct) {
-      alert('Por favor selecciona un producto');
-      return;
-    }
-
-    if (quantity < 1) {
-      alert('La cantidad debe ser mayor a 0');
-      return;
-    }
-
+    if (!selectedProduct) return alert('Por favor selecciona un producto');
+    if (quantity < 1) return alert('La cantidad debe ser mayor a 0');
     setIsSubmitting(true);
-
     try {
       const saleDate = new Date(date);
       SalesService.addSale(selectedProduct, quantity, saleDate, notes);
-      
-      alert('¡Venta registrada exitosamente!');
-      
-      navigate('/');
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
+      setTimeout(() => navigate('/'), 2500);
     } catch (error) {
       console.error('Error al registrar venta:', error);
       alert('Hubo un error al registrar la venta. Por favor intenta de nuevo.');
@@ -42,70 +42,122 @@ const New = () => {
     }
   };
 
-  const calculateTotal = () => {
-    if (!selectedProduct) return 0;
-    return selectedProduct.price * quantity;
-  };
+  const calculateTotal = () => (!selectedProduct ? 0 : selectedProduct.price * quantity);
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
     }).format(value);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-kawaii-cream via-kawaii-pink/10 to-kawaii-purple/10 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
+      <div className="container mx-auto px-4 max-w-7xl">
         <div className="mb-8">
           <button
             onClick={() => navigate('/')}
             className="flex items-center text-kawaii-rose hover:text-kawaii-purple transition-colors mb-4"
           >
-            <ICONS.back className="mr-2" size={20} />
+            <ArrowLeft className="mr-2" size={20} />
             Volver al Inicio
           </button>
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-kawaii-rose to-kawaii-purple mb-2">
-            Nueva Venta
+            Nueva Venta 🍬
           </h1>
-          <p className="text-gray-600">
-            Registra una nueva venta de gomitas enchiladas
-          </p>
+          <p className="text-gray-600">Registra una nueva venta de gomitas enchiladas</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Product Selection */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              1. Selecciona el Producto
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {PRODUCTS_CATALOG.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  selected={selectedProduct?.id === product.id}
-                  onSelect={setSelectedProduct}
-                />
-              ))}
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">1. Selecciona el Producto</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="border-2 border-orange-200 rounded-xl p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+                <div className="flex items-center gap-3 mb-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-3 shadow-md">
+                  <span className="text-3xl">🥭</span>
+                  <h3 className="text-lg font-bold text-orange-800">Chamoy Mango</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
+                    <div className="text-center bg-orange-100 rounded-lg py-2 mb-2 font-bold text-orange-800 text-sm">
+                      Medianas
+                    </div>
+                    {PRODUCTS_CATALOG.filter(
+                      (p) => p.chamoyFlavor === ChamoyFlavor.MANGO && p.size === ProductSize.MEDIANA
+                    ).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        selected={selectedProduct?.id === product.id}
+                        onSelect={setSelectedProduct}
+                      />
+                    ))}
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-center bg-orange-100 rounded-lg py-2 mb-2 font-bold text-orange-800 text-sm">
+                      Jumbo
+                    </div>
+                    {PRODUCTS_CATALOG.filter(
+                      (p) => p.chamoyFlavor === ChamoyFlavor.MANGO && p.size === ProductSize.JUMBO
+                    ).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        selected={selectedProduct?.id === product.id}
+                        onSelect={setSelectedProduct}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-2 border-pink-200 rounded-xl p-4 bg-gradient-to-br from-pink-50 to-red-50">
+                <div className="flex items-center gap-3 mb-4 bg-gradient-to-r from-pink-100 to-red-100 rounded-lg p-3 shadow-md">
+                  <span className="text-3xl">🍓</span>
+                  <h3 className="text-lg font-bold text-red-800">Chamoy Fresa</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
+                    <div className="text-center bg-pink-100 rounded-lg py-2 mb-2 font-bold text-red-800 text-sm">
+                      Medianas
+                    </div>
+                    {PRODUCTS_CATALOG.filter(
+                      (p) => p.chamoyFlavor === ChamoyFlavor.FRESA && p.size === ProductSize.MEDIANA
+                    ).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        selected={selectedProduct?.id === product.id}
+                        onSelect={setSelectedProduct}
+                      />
+                    ))}
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-center bg-pink-100 rounded-lg py-2 mb-2 font-bold text-red-800 text-sm">
+                      Jumbo
+                    </div>
+                    {PRODUCTS_CATALOG.filter(
+                      (p) => p.chamoyFlavor === ChamoyFlavor.FRESA && p.size === ProductSize.JUMBO
+                    ).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        selected={selectedProduct?.id === product.id}
+                        onSelect={setSelectedProduct}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Sale Details */}
           {selectedProduct && (
             <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                2. Detalles de la Venta
-              </h2>
-
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">2. Detalles de la Venta</h2>
               <div className="space-y-6">
-                {/* Quantity */}
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Cantidad
-                  </label>
+                  <label className="block text-gray-700 font-semibold mb-2">Cantidad</label>
                   <input
                     type="number"
                     min="1"
@@ -115,12 +167,8 @@ const New = () => {
                     required
                   />
                 </div>
-
-                {/* Date and Time */}
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Fecha y Hora
-                  </label>
+                  <label className="block text-gray-700 font-semibold mb-2">Fecha y Hora</label>
                   <input
                     type="datetime-local"
                     value={date}
@@ -129,12 +177,8 @@ const New = () => {
                     required
                   />
                 </div>
-
-                {/* Notes */}
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Notas (Opcional)
-                  </label>
+                  <label className="block text-gray-700 font-semibold mb-2">Notas (Opcional)</label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -143,26 +187,19 @@ const New = () => {
                     rows="3"
                   />
                 </div>
-
-                {/* Total */}
                 <div className="bg-gradient-to-r from-kawaii-pink to-kawaii-purple rounded-xl p-6 text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white/90 mb-1">Total a Cobrar</p>
-                      <p className="text-4xl font-bold">
-                        {formatCurrency(calculateTotal())}
-                      </p>
+                      <p className="text-4xl font-bold">{formatCurrency(calculateTotal())}</p>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                      <ICONS.money size={48} className="text-white" />
-                    </div>
+                    <div className="text-6xl">💰</div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Submit Button */}
           {selectedProduct && (
             <div className="flex space-x-4">
               <button
@@ -185,7 +222,7 @@ const New = () => {
                   </>
                 ) : (
                   <>
-                    <ICONS.save className="mr-2" size={20} />
+                    <Save className="mr-2" size={20} />
                     Registrar Venta
                   </>
                 )}
@@ -193,6 +230,14 @@ const New = () => {
             </div>
           )}
         </form>
+
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="¡Venta Registrada!"
+          message="La venta se ha registrado exitosamente"
+          icon="🎉"
+        />
       </div>
     </div>
   );

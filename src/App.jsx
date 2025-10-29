@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Header } from './components';
+import { Header, Footer } from './components';
 import { Home, New, Calendar, Stats } from './pages';
-import { Footer } from './components/Footer';
 import './styles/index.css';
 
 function App() {

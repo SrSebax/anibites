@@ -28,6 +28,17 @@ export class Sale {
     };
   }
 
+  // Obtiene la fecha/hora local sin conversión de zona horaria
+  getLocalDateTime() {
+    const year = this.date.getFullYear();
+    const month = String(this.date.getMonth() + 1).padStart(2, '0');
+    const day = String(this.date.getDate()).padStart(2, '0');
+    const hours = String(this.date.getHours()).padStart(2, '0');
+    const minutes = String(this.date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
   static fromJSON(json) {
     const { Product } = require('./Product');
     const product = Product.fromJSON(json.product);

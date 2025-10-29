@@ -1,9 +1,7 @@
 /**
  * Modelo de Producto
- * Representa un tipo de gomita con su tamaño, precio y variedades disponibles
+ * Representa un tipo de gomita con su tamaño, precio, variedades y sabor de chamoy
  */
-
-import { PRODUCT_VARIETY_ICONS } from '../config/icons';
 
 export const ProductSize = {
   MEDIANA: 'mediana',
@@ -16,13 +14,19 @@ export const ProductVariety = {
   AHOGADA: 'ahogada'
 };
 
+export const ChamoyFlavor = {
+  MANGO: 'mango',
+  FRESA: 'fresa'
+};
+
 export class Product {
-  constructor(size, variety, price) {
-    this.id = `${size}-${variety}`;
+  constructor(size, variety, chamoyFlavor, price) {
+    this.id = `${size}-${variety}-${chamoyFlavor}`;
     this.size = size;
     this.variety = variety;
+    this.chamoyFlavor = chamoyFlavor;
     this.price = price;
-    this.name = `Gomitas ${this.getSizeName()} - ${this.getVarietyName()}`;
+    this.name = `Gomitas ${this.getSizeName()} - ${this.getVarietyName()} - Chamoy ${this.getChamoyFlavorName()}`;
   }
 
   getSizeName() {
@@ -38,28 +42,29 @@ export class Product {
     return varieties[this.variety];
   }
 
-  /**
-   * Obtiene el componente de icono para la variedad
-   * @returns {React.Component} Componente de icono de lucide-react
-   */
-  getIconComponent() {
-    return PRODUCT_VARIETY_ICONS[this.variety]?.component;
+  getChamoyFlavorName() {
+    const flavors = {
+      [ChamoyFlavor.MANGO]: 'Mango',
+      [ChamoyFlavor.FRESA]: 'Fresa'
+    };
+    return flavors[this.chamoyFlavor];
   }
 
-  /**
-   * Obtiene el color del icono
-   * @returns {string} Clase de color CSS
-   */
-  getIconColor() {
-    return PRODUCT_VARIETY_ICONS[this.variety]?.color || 'text-gray-500';
+  getIcon() {
+    const icons = {
+      [ProductVariety.MIXTA]: '🍬',
+      [ProductVariety.PICOSITA]: '🌶️',
+      [ProductVariety.AHOGADA]: '💧'
+    };
+    return icons[this.variety];
   }
 
-  /**
-   * Obtiene el color de fondo para el icono
-   * @returns {string} Clase de color de fondo CSS
-   */
-  getIconBgColor() {
-    return PRODUCT_VARIETY_ICONS[this.variety]?.bgColor || 'bg-gray-100';
+  getChamoyIcon() {
+    const icons = {
+      [ChamoyFlavor.MANGO]: '🥭',
+      [ChamoyFlavor.FRESA]: '🍓'
+    };
+    return icons[this.chamoyFlavor];
   }
 
   getColor() {
@@ -76,24 +81,37 @@ export class Product {
       id: this.id,
       size: this.size,
       variety: this.variety,
+      chamoyFlavor: this.chamoyFlavor,
       price: this.price,
       name: this.name
     };
   }
 
   static fromJSON(json) {
-    return new Product(json.size, json.variety, json.price);
+    return new Product(json.size, json.variety, json.chamoyFlavor, json.price);
   }
 }
 
 // Catálogo de productos disponibles
 export const PRODUCTS_CATALOG = [
-  // Medianas
-  new Product(ProductSize.MEDIANA, ProductVariety.MIXTA, 5500),
-  new Product(ProductSize.MEDIANA, ProductVariety.PICOSITA, 5500),
-  new Product(ProductSize.MEDIANA, ProductVariety.AHOGADA, 5500),
-  // Jumbo
-  new Product(ProductSize.JUMBO, ProductVariety.MIXTA, 10000),
-  new Product(ProductSize.JUMBO, ProductVariety.PICOSITA, 10000),
-  new Product(ProductSize.JUMBO, ProductVariety.AHOGADA, 10000),
+  // Medianas - Chamoy Mango
+  new Product(ProductSize.MEDIANA, ProductVariety.MIXTA, ChamoyFlavor.MANGO, 5500),
+  new Product(ProductSize.MEDIANA, ProductVariety.PICOSITA, ChamoyFlavor.MANGO, 5500),
+  new Product(ProductSize.MEDIANA, ProductVariety.AHOGADA, ChamoyFlavor.MANGO, 5500),
+  
+  // Medianas - Chamoy Fresa
+  new Product(ProductSize.MEDIANA, ProductVariety.MIXTA, ChamoyFlavor.FRESA, 5500),
+  new Product(ProductSize.MEDIANA, ProductVariety.PICOSITA, ChamoyFlavor.FRESA, 5500),
+  new Product(ProductSize.MEDIANA, ProductVariety.AHOGADA, ChamoyFlavor.FRESA, 5500),
+  
+  // Jumbo - Chamoy Mango
+  new Product(ProductSize.JUMBO, ProductVariety.MIXTA, ChamoyFlavor.MANGO, 10000),
+  new Product(ProductSize.JUMBO, ProductVariety.PICOSITA, ChamoyFlavor.MANGO, 10000),
+  new Product(ProductSize.JUMBO, ProductVariety.AHOGADA, ChamoyFlavor.MANGO, 10000),
+  
+  // Jumbo - Chamoy Fresa
+  new Product(ProductSize.JUMBO, ProductVariety.MIXTA, ChamoyFlavor.FRESA, 10000),
+  new Product(ProductSize.JUMBO, ProductVariety.PICOSITA, ChamoyFlavor.FRESA, 10000),
+  new Product(ProductSize.JUMBO, ProductVariety.AHOGADA, ChamoyFlavor.FRESA, 10000),
 ];
+

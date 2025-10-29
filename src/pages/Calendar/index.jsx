@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { SaleCard, EmptyState } from '../../components';
+import { SaleCard, ConfirmDialog, SuccessModal } from '../../components';
 import { SalesService } from '../../services';
 
 const Calendar = () => {
@@ -8,6 +8,9 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [salesByDate, setSalesByDate] = useState({});
   const [selectedDaySales, setSelectedDaySales] = useState([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [saleToDelete, setSaleToDelete] = useState(null);
 
   useEffect(() => {
     loadMonthSales();
@@ -48,9 +51,16 @@ const Calendar = () => {
   };
 
   const handleDeleteSale = (id) => {
-    if (window.confirm('¿Estás segura de eliminar esta venta?')) {
-      SalesService.deleteSale(id);
+    setSaleToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (saleToDelete) {
+      SalesService.deleteSale(saleToDelete);
       loadMonthSales();
+      setSaleToDelete(null);
+      setShowSuccessModal(true);
     }
   };
 
@@ -222,7 +232,7 @@ const Calendar = () => {
                     <p className="font-semibold mb-2">Resumen:</p>
                     {SalesService.getProductStats(selectedDaySales).map((stat) => (
                       <div key={stat.product.id} className="flex justify-between items-center py-1">
-                        <span>{stat.product.getIcon()} {stat.quantity}</span>
+                        <span>{stat.product.getIcon()} {stat.product.name} x{stat.quantity}</span>
                         <span className="font-semibold">{formatCurrency(stat.total)}</span>
                       </div>
                     ))}
@@ -255,6 +265,30 @@ const Calendar = () => {
             </div>
           </div>
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => {
+            setShowConfirmDialog(false);
+            setSaleToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="¿Eliminar venta?"
+          message="¿Estás segura de que deseas eliminar esta venta? Esta acción no se puede deshacer."
+          confirmText="Sí, eliminar"
+          cancelText="Cancelar"
+          type="danger"
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="¡Venta Eliminada!"
+          message="La venta se ha eliminado exitosamente"
+          icon="🗑️"
+        />
       </div>
     </div>
   );
