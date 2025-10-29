@@ -23,38 +23,45 @@ const Stats = () => {
     loadStatistics();
   }, []);
 
-  const loadStatistics = () => {
-    const all = SalesService.getAllSales();
-    const month = SalesService.getCurrentMonthSales();
+  const loadStatistics = async () => {
+    try {
+      // Cargar ventas desde Firebase
+      await SalesService.loadSales();
+      
+      const all = await SalesService.getAllSales();
+      const month = SalesService.getCurrentMonthSales();
 
-    setAllSales(all);
-    setMonthSales(month);
+      setAllSales(all);
+      setMonthSales(month);
 
-    setStats({
-      totalSales: SalesService.calculateTotal(all),
-      totalQuantity: SalesService.calculateTotalQuantity(all),
-      monthTotal: SalesService.calculateTotal(month),
-      monthQuantity: SalesService.calculateTotalQuantity(month),
-      averageDaily: SalesService.getAverageDailySales(month)
-    });
-
-    setProductStats(SalesService.getProductStats(month));
-    setVarietyStats(SalesService.getVarietyStats(month));
-    setSizeStats(SalesService.getSizeStats(month));
-
-    // Preparar datos para gráfico de ventas diarias (últimos 7 días)
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const sales = SalesService.getSalesByDate(date);
-      last7Days.push({
-        date: date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' }),
-        total: SalesService.calculateTotal(sales),
-        quantity: SalesService.calculateTotalQuantity(sales)
+      setStats({
+        totalSales: SalesService.calculateTotal(all),
+        totalQuantity: SalesService.calculateTotalQuantity(all),
+        monthTotal: SalesService.calculateTotal(month),
+        monthQuantity: SalesService.calculateTotalQuantity(month),
+        averageDaily: SalesService.getAverageDailySales(month)
       });
+
+      setProductStats(SalesService.getProductStats(month));
+      setVarietyStats(SalesService.getVarietyStats(month));
+      setSizeStats(SalesService.getSizeStats(month));
+
+      // Preparar datos para gráfico de ventas diarias (últimos 7 días)
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const sales = SalesService.getSalesByDate(date);
+        last7Days.push({
+          date: date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' }),
+          total: SalesService.calculateTotal(sales),
+          quantity: SalesService.calculateTotalQuantity(sales)
+        });
+      }
+      setDailySalesData(last7Days);
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error);
     }
-    setDailySalesData(last7Days);
   };
 
   const formatCurrency = (value) => {

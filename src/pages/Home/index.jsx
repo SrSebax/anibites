@@ -21,19 +21,26 @@ const Home = () => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const today = SalesService.getTodaySales();
-    const month = SalesService.getCurrentMonthSales();
+  const loadData = async () => {
+    try {
+      // Cargar ventas desde Firebase
+      await SalesService.loadSales();
+      
+      const today = SalesService.getTodaySales();
+      const month = SalesService.getCurrentMonthSales();
 
-    setTodaySales(today);
-    setMonthSales(month);
+      setTodaySales(today);
+      setMonthSales(month);
 
-    setStats({
-      todayTotal: SalesService.calculateTotal(today),
-      todayQuantity: SalesService.calculateTotalQuantity(today),
-      monthTotal: SalesService.calculateTotal(month),
-      monthQuantity: SalesService.calculateTotalQuantity(month)
-    });
+      setStats({
+        todayTotal: SalesService.calculateTotal(today),
+        todayQuantity: SalesService.calculateTotalQuantity(today),
+        monthTotal: SalesService.calculateTotal(month),
+        monthQuantity: SalesService.calculateTotalQuantity(month)
+      });
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+    }
   };
 
   const handleDeleteSale = (id) => {
@@ -41,12 +48,17 @@ const Home = () => {
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (saleToDelete) {
-      SalesService.deleteSale(saleToDelete);
-      loadData();
-      setSaleToDelete(null);
-      setShowSuccessModal(true);
+      try {
+        await SalesService.deleteSale(saleToDelete);
+        await loadData();
+        setSaleToDelete(null);
+        setShowSuccessModal(true);
+      } catch (error) {
+        console.error('Error al eliminar venta:', error);
+        alert('Hubo un error al eliminar la venta. Por favor intenta de nuevo.');
+      }
     }
   };
 

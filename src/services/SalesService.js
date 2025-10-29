@@ -1,60 +1,77 @@
 /**
  * Servicio de Ventas
  * Maneja toda la lógica de negocio relacionada con las ventas
+ * AHORA USA FIREBASE FIRESTORE
  */
 
 import { Sale } from '../models/Sale';
 import { Product } from '../models/Product';
-import StorageService from './StorageService';
+import FirebaseService from './FirebaseService';
 
 class SalesService {
   constructor() {
     this.sales = [];
-    this.loadSales();
+    this.isLoaded = false;
   }
 
   /**
-   * Carga las ventas desde el almacenamiento
+   * Carga las ventas desde Firebase Firestore
    */
-  loadSales() {
-    const salesData = StorageService.loadSales();
-    this.sales = salesData.map(saleJson => {
-      const product = Product.fromJSON(saleJson.product);
-      const sale = new Sale(
-        product,
-        saleJson.quantity,
-        new Date(saleJson.date),
-        saleJson.notes
-      );
-      sale.id = saleJson.id;
-      sale.total = saleJson.total;
-      return sale;
-    });
-    return this.sales;
-  }
-
-  /**
-   * Guarda las ventas en el almacenamiento
-   */
-  saveSales() {
-    const salesData = this.sales.map(sale => sale.toJSON());
-    return StorageService.saveSales(salesData);
+  async loadSales() {
+    try {
+      const salesData = await FirebaseService.getAllSales();
+      this.sales = salesData.map(saleJson => {
+        const product = Product.fromJSON(saleJson.product);
+        const sale = new Sale(
+          product,
+          saleJson.quantity,
+          new Date(saleJson.date),
+          saleJson.notes
+        );
+        sale.id = saleJson.id;
+        sale.firestoreId = saleJson.firestoreId; // ID de Firestore
+        sale.total = saleJson.total;
+        return sale;
+      });
+      this.isLoaded = true;
+      return this.sales;
+    } catch (error) {
+      console.error('Error al cargar ventas:', error);
+      return [];
+    }
   }
 
   /**
    * Agrega una nueva venta
    */
-  addSale(product, quantity, date = new Date(), notes = '') {
-    const sale = new Sale(product, quantity, date, notes);
-    this.sales.push(sale);
-    this.saveSales();
-    return sale;
+  async addSale(product, quantity, date = new Date(), notes = '') {
+    try {
+      const sale = new Sale(product, quantity, date, notes);
+      const saleData = sale.toJSON();
+      
+      // Guardar en Firebase
+      const savedSale = await FirebaseService.addSale(saleData);
+      
+      // Actualizar el ID de Firestore
+      sale.firestoreId = savedSale.firestoreId;
+      
+      // Agregar a la lista local
+      this.sales.push(sale);
+      
+      return sale;
+    } catch (error) {
+      console.error('Error al agregar venta:', error);
+      throw error;
+    }
   }
 
   /**
-   * Obtiene todas las ventas
+   * Obtiene todas las ventas (carga si no está cargado)
    */
-  getAllSales() {
+  async getAllSales() {
+    if (!this.isLoaded) {
+      await this.loadSales();
+    }
     return [...this.sales];
   }
 
@@ -68,30 +85,65 @@ class SalesService {
   /**
    * Elimina una venta
    */
-  deleteSale(id) {
-    const index = this.sales.findIndex(sale => sale.id === id);
-    if (index !== -1) {
-      this.sales.splice(index, 1);
-      this.saveSales();
-      return true;
+  async deleteSale(id) {
+    try {
+      const index = this.sales.findIndex(sale => sale.id === id);
+      if (index !== -1) {
+        const sale = this.sales[index];
+        
+        // Eliminar de Firebase
+        if (sale.firestoreId) {
+          await FirebaseService.deleteSale(sale.firestoreId);
+        }
+        
+        // Eliminar de la lista local
+        this.sales.splice(index, 1);
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error al eliminar venta:', error);
+      throw error;
     }
-    return false;
   }
 
   /**
    * Actualiza una venta
    */
-  updateSale(id, updates) {
-    const sale = this.getSaleById(id);
-    if (sale) {
-      Object.assign(sale, updates);
-      if (updates.quantity || updates.product) {
-        sale.total = sale.product.price * sale.quantity;
+  async updateSale(id, updates) {
+    try {
+      const sale = this.getSaleById(id);
+      if (sale) {
+        // Actualizar propiedades
+        Object.assign(sale, updates);
+        if (updates.quantity || updates.product) {
+          sale.total = sale.product.price * sale.quantity;
+        }
+        
+        // Actualizar en Firebase
+        if (sale.firestoreId) {
+          const updateData = {
+            quantity: sale.quantity,
+            notes: sale.notes,
+            total: sale.total,
+            date: sale.date.toISOString()
+          };
+          
+          if (updates.product) {
+            updateData.product = sale.product.toJSON();
+          }
+          
+          await FirebaseService.updateSale(sale.firestoreId, updateData);
+        }
+        
+        return sale;
       }
-      this.saveSales();
-      return sale;
+      return null;
+    } catch (error) {
+      console.error('Error al actualizar venta:', error);
+      throw error;
     }
-    return null;
   }
 
   /**
@@ -279,4 +331,3 @@ class SalesService {
 }
 
 export default new SalesService();
-

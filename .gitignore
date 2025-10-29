@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Firebase
+.firebase
+.env
+.env.local
+.env.production
+firebase-debug.log
+firestore-debug.log
+

@@ -24,14 +24,14 @@ const New = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedProduct) return alert('Por favor selecciona un producto');
     if (quantity < 1) return alert('La cantidad debe ser mayor a 0');
     setIsSubmitting(true);
     try {
       const saleDate = new Date(date);
-      SalesService.addSale(selectedProduct, quantity, saleDate, notes);
+      await SalesService.addSale(selectedProduct, quantity, saleDate, notes);
       setIsSubmitting(false);
       setShowSuccessModal(true);
       setTimeout(() => navigate('/'), 2500);
@@ -154,7 +154,6 @@ const New = () => {
 
           {selectedProduct && (
             <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">2. Detalles de la Venta</h2>
               <div className="space-y-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">Cantidad</label>
@@ -165,26 +164,6 @@ const New = () => {
                     onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-kawaii-rose focus:outline-none transition-colors text-lg font-semibold"
                     required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Fecha y Hora</label>
-                  <input
-                    type="datetime-local"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-kawaii-rose focus:outline-none transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Notas (Opcional)</label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ej: Cliente frecuente, pedido especial, etc."
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-kawaii-rose focus:outline-none transition-colors resize-none"
-                    rows="3"
                   />
                 </div>
                 <div className="bg-gradient-to-r from-kawaii-pink to-kawaii-purple rounded-xl p-6 text-white">

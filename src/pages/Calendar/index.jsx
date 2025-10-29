@@ -20,28 +20,35 @@ const Calendar = () => {
     loadSelectedDaySales();
   }, [selectedDate, salesByDate]);
 
-  const loadMonthSales = () => {
-    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    const sales = SalesService.getSalesByDateRange(firstDay, lastDay);
+  const loadMonthSales = async () => {
+    try {
+      // Cargar ventas desde Firebase
+      await SalesService.loadSales();
+      
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const sales = SalesService.getSalesByDateRange(firstDay, lastDay);
 
-    // Agrupar ventas por fecha
-    const grouped = {};
-    sales.forEach(sale => {
-      const dateKey = sale.date.toISOString().split('T')[0];
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = {
-          sales: [],
-          total: 0,
-          quantity: 0
-        };
-      }
-      grouped[dateKey].sales.push(sale);
-      grouped[dateKey].total += sale.total;
-      grouped[dateKey].quantity += sale.quantity;
-    });
+      // Agrupar ventas por fecha
+      const grouped = {};
+      sales.forEach(sale => {
+        const dateKey = sale.date.toISOString().split('T')[0];
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = {
+            sales: [],
+            total: 0,
+            quantity: 0
+          };
+        }
+        grouped[dateKey].sales.push(sale);
+        grouped[dateKey].total += sale.total;
+        grouped[dateKey].quantity += sale.quantity;
+      });
 
-    setSalesByDate(grouped);
+      setSalesByDate(grouped);
+    } catch (error) {
+      console.error('Error al cargar ventas del mes:', error);
+    }
   };
 
   const loadSelectedDaySales = () => {
@@ -55,12 +62,17 @@ const Calendar = () => {
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (saleToDelete) {
-      SalesService.deleteSale(saleToDelete);
-      loadMonthSales();
-      setSaleToDelete(null);
-      setShowSuccessModal(true);
+      try {
+        await SalesService.deleteSale(saleToDelete);
+        await loadMonthSales();
+        setSaleToDelete(null);
+        setShowSuccessModal(true);
+      } catch (error) {
+        console.error('Error al eliminar venta:', error);
+        alert('Hubo un error al eliminar la venta. Por favor intenta de nuevo.');
+      }
     }
   };
 

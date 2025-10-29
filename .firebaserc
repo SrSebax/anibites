@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "anibites-control"
+  },
+  "targets": {
+    "anibites-control": {
+      "hosting": {
+        "anibites": [
+          "anibites"
+        ]
+      }
+    }
+  }
+}
+
