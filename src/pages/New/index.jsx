@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
 import { ProductCard, SuccessModal } from '../../components';
@@ -34,7 +34,13 @@ const New = () => {
       await SalesService.addSale(selectedProduct, quantity, saleDate, notes);
       setIsSubmitting(false);
       setShowSuccessModal(true);
-      setTimeout(() => navigate('/'), 2500);
+      // Limpiar el formulario pero permanecer en la página
+      setTimeout(() => {
+        setSelectedProduct(null);
+        setQuantity(1);
+        setNotes('');
+        setShowSuccessModal(false);
+      }, 2500);
     } catch (error) {
       console.error('Error al registrar venta:', error);
       alert('Hubo un error al registrar la venta. Por favor intenta de nuevo.');
@@ -42,14 +48,46 @@ const New = () => {
     }
   };
 
-  const calculateTotal = () => (!selectedProduct ? 0 : selectedProduct.price * quantity);
+  const calculateTotal = useMemo(() => 
+    (!selectedProduct ? 0 : selectedProduct.price * quantity), 
+    [selectedProduct, quantity]
+  );
 
-  const formatCurrency = (value) =>
+  const formatCurrency = useCallback((value) =>
     new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0,
-    }).format(value);
+    }).format(value), []);
+
+  // Memoizar los productos filtrados para evitar recalcularlos en cada render
+  const mangoMedianas = useMemo(() => 
+    PRODUCTS_CATALOG.filter(
+      (p) => p.chamoyFlavor === ChamoyFlavor.MANGO && p.size === ProductSize.MEDIANA
+    ), []
+  );
+
+  const mangoJumbo = useMemo(() => 
+    PRODUCTS_CATALOG.filter(
+      (p) => p.chamoyFlavor === ChamoyFlavor.MANGO && p.size === ProductSize.JUMBO
+    ), []
+  );
+
+  const fresaMedianas = useMemo(() => 
+    PRODUCTS_CATALOG.filter(
+      (p) => p.chamoyFlavor === ChamoyFlavor.FRESA && p.size === ProductSize.MEDIANA
+    ), []
+  );
+
+  const fresaJumbo = useMemo(() => 
+    PRODUCTS_CATALOG.filter(
+      (p) => p.chamoyFlavor === ChamoyFlavor.FRESA && p.size === ProductSize.JUMBO
+    ), []
+  );
+
+  const handleProductSelect = useCallback((product) => {
+    setSelectedProduct(product);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-kawaii-cream via-kawaii-pink/10 to-kawaii-purple/10 py-8">
@@ -72,24 +110,22 @@ const New = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">1. Selecciona el Producto</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="border-2 border-orange-200 rounded-xl p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
-                <div className="flex items-center gap-3 mb-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-3 shadow-md">
-                  <span className="text-3xl">🥭</span>
-                  <h3 className="text-lg font-bold text-orange-800">Chamoy Mango</h3>
+              <div className="border-2 border-orange-200 rounded-xl p-2 sm:p-3 md:p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-2 sm:p-3 shadow-md">
+                  <span className="text-2xl sm:text-3xl">🥭</span>
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-orange-800">Chamoy Mango</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-3">
-                    <div className="text-center bg-orange-100 rounded-lg py-2 mb-2 font-bold text-orange-800 text-sm">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3">
+                  <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
+                    <div className="text-center bg-orange-100 rounded-lg py-1 sm:py-1.5 md:py-2 mb-1 sm:mb-2 font-bold text-orange-800 text-xs sm:text-sm">
                       Medianas
                     </div>
-                    {PRODUCTS_CATALOG.filter(
-                      (p) => p.chamoyFlavor === ChamoyFlavor.MANGO && p.size === ProductSize.MEDIANA
-                    ).map((product) => (
+                    {mangoMedianas.map((product) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         selected={selectedProduct?.id === product.id}
-                        onSelect={setSelectedProduct}
+                        onSelect={handleProductSelect}
                       />
                     ))}
                   </div>
@@ -97,53 +133,47 @@ const New = () => {
                     <div className="text-center bg-orange-100 rounded-lg py-2 mb-2 font-bold text-orange-800 text-sm">
                       Jumbo
                     </div>
-                    {PRODUCTS_CATALOG.filter(
-                      (p) => p.chamoyFlavor === ChamoyFlavor.MANGO && p.size === ProductSize.JUMBO
-                    ).map((product) => (
+                    {mangoJumbo.map((product) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         selected={selectedProduct?.id === product.id}
-                        onSelect={setSelectedProduct}
+                        onSelect={handleProductSelect}
                       />
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="border-2 border-pink-200 rounded-xl p-4 bg-gradient-to-br from-pink-50 to-red-50">
-                <div className="flex items-center gap-3 mb-4 bg-gradient-to-r from-pink-100 to-red-100 rounded-lg p-3 shadow-md">
-                  <span className="text-3xl">🍓</span>
-                  <h3 className="text-lg font-bold text-red-800">Chamoy Fresa</h3>
+              <div className="border-2 border-pink-200 rounded-xl p-2 sm:p-3 md:p-4 bg-gradient-to-br from-pink-50 to-red-50">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-pink-100 to-red-100 rounded-lg p-2 sm:p-3 shadow-md">
+                  <span className="text-2xl sm:text-3xl">🍓</span>
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-red-800">Chamoy Fresa</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-3">
-                    <div className="text-center bg-pink-100 rounded-lg py-2 mb-2 font-bold text-red-800 text-sm">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3">
+                  <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
+                    <div className="text-center bg-pink-100 rounded-lg py-1 sm:py-1.5 md:py-2 mb-1 sm:mb-2 font-bold text-red-800 text-xs sm:text-sm">
                       Medianas
                     </div>
-                    {PRODUCTS_CATALOG.filter(
-                      (p) => p.chamoyFlavor === ChamoyFlavor.FRESA && p.size === ProductSize.MEDIANA
-                    ).map((product) => (
+                    {fresaMedianas.map((product) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         selected={selectedProduct?.id === product.id}
-                        onSelect={setSelectedProduct}
+                        onSelect={handleProductSelect}
                       />
                     ))}
                   </div>
-                  <div className="space-y-3">
-                    <div className="text-center bg-pink-100 rounded-lg py-2 mb-2 font-bold text-red-800 text-sm">
+                  <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
+                    <div className="text-center bg-pink-100 rounded-lg py-1 sm:py-1.5 md:py-2 mb-1 sm:mb-2 font-bold text-red-800 text-xs sm:text-sm">
                       Jumbo
                     </div>
-                    {PRODUCTS_CATALOG.filter(
-                      (p) => p.chamoyFlavor === ChamoyFlavor.FRESA && p.size === ProductSize.JUMBO
-                    ).map((product) => (
+                    {fresaJumbo.map((product) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         selected={selectedProduct?.id === product.id}
-                        onSelect={setSelectedProduct}
+                        onSelect={handleProductSelect}
                       />
                     ))}
                   </div>
@@ -170,7 +200,7 @@ const New = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white/90 mb-1">Total a Cobrar</p>
-                      <p className="text-4xl font-bold">{formatCurrency(calculateTotal())}</p>
+                      <p className="text-4xl font-bold">{formatCurrency(calculateTotal)}</p>
                     </div>
                     <div className="text-6xl">💰</div>
                   </div>

@@ -16,7 +16,7 @@ export const Footer = () => {
           />
           <div className="mb-3 text-center">
             <p className="text-2xl font-bold tracking-wide">Anibites</p>
-            <p className="text-lg mt-1">Creado por Ana Naranjo & Ana Giraldo</p>
+            <p className="text-lg mt-1">Ana Naranjo & Ana Giraldo</p>
           </div>
         </a>
 
