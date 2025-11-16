@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { SaleCard, ConfirmDialog, SuccessModal } from '../../components';
-import { SalesService } from '../../services';
+import { useState, useEffect } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from "lucide-react";
+import { SaleCard, ConfirmDialog, SuccessModal } from "../../components";
+import { SalesService } from "../../services";
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -24,20 +28,29 @@ const Calendar = () => {
     try {
       // Cargar ventas desde Firebase
       await SalesService.loadSales();
-      
-      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+      const firstDay = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const lastDay = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+
       const sales = SalesService.getSalesByDateRange(firstDay, lastDay);
 
-      // Agrupar ventas por fecha
+      // Agrupar ventas por fecha local
       const grouped = {};
-      sales.forEach(sale => {
-        const dateKey = sale.date.toISOString().split('T')[0];
+      sales.forEach((sale) => {
+        const dateKey = SalesService.getLocalDateKey(sale.date);
         if (!grouped[dateKey]) {
           grouped[dateKey] = {
             sales: [],
             total: 0,
-            quantity: 0
+            quantity: 0,
           };
         }
         grouped[dateKey].sales.push(sale);
@@ -47,12 +60,12 @@ const Calendar = () => {
 
       setSalesByDate(grouped);
     } catch (error) {
-      console.error('Error al cargar ventas del mes:', error);
+      console.error("Error al cargar ventas del mes:", error);
     }
   };
 
   const loadSelectedDaySales = () => {
-    const dateKey = selectedDate.toISOString().split('T')[0];
+    const dateKey = SalesService.getLocalDateKey(selectedDate);
     const daySales = salesByDate[dateKey]?.sales || [];
     setSelectedDaySales(daySales);
   };
@@ -70,8 +83,10 @@ const Calendar = () => {
         setSaleToDelete(null);
         setShowSuccessModal(true);
       } catch (error) {
-        console.error('Error al eliminar venta:', error);
-        alert('Hubo un error al eliminar la venta. Por favor intenta de nuevo.');
+        console.error("Error al eliminar venta:", error);
+        alert(
+          "Hubo un error al eliminar la venta. Por favor intenta de nuevo."
+        );
       }
     }
   };
@@ -88,7 +103,9 @@ const Calendar = () => {
   };
 
   const changeMonth = (increment) => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1)
+    );
   };
 
   const isToday = (day) => {
@@ -109,22 +126,40 @@ const Calendar = () => {
   };
 
   const getDaySales = (day) => {
-    const dateKey = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-      .toISOString()
-      .split('T')[0];
+    const dateKey = SalesService.getLocalDateKey(
+      new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+    );
     return salesByDate[dateKey];
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
     }).format(value);
   };
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
-  const monthName = currentDate.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  const monthName = currentDate.toLocaleDateString("es-CO", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const getPaymentStats = (sales) => {
+    const stats = {
+      efectivo: 0,
+      transferencia: 0,
+    };
+
+    sales.forEach((sale) => {
+      const method = sale.paymentMethod?.toLowerCase();
+      if (method === "efectivo") stats.efectivo += sale.total;
+      if (method === "transferencia") stats.transferencia += sale.total;
+    });
+
+    return stats;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-kawaii-cream via-kawaii-pink/10 to-kawaii-purple/10 py-8">
@@ -165,21 +200,26 @@ const Calendar = () => {
 
               {/* Days of Week */}
               <div className="grid grid-cols-7 gap-2 mb-2">
-                {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
-                  <div key={day} className="text-center font-bold text-gray-600 text-sm py-2">
-                    {day}
-                  </div>
-                ))}
+                {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map(
+                  (day) => (
+                    <div
+                      key={day}
+                      className="text-center font-bold text-gray-600 text-sm py-2"
+                    >
+                      {day}
+                    </div>
+                  )
+                )}
               </div>
 
               {/* Calendar Days */}
               <div className="grid grid-cols-7 gap-2">
-                {/* Empty cells for days before month starts */}
+                {/* Empty cells before month starts */}
                 {Array.from({ length: startingDayOfWeek }).map((_, index) => (
                   <div key={`empty-${index}`} className="aspect-square" />
                 ))}
 
-                {/* Days of the month */}
+                {/* Days of month */}
                 {Array.from({ length: daysInMonth }).map((_, index) => {
                   const day = index + 1;
                   const daySales = getDaySales(day);
@@ -188,21 +228,35 @@ const Calendar = () => {
                   return (
                     <button
                       key={day}
-                      onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
+                      onClick={() =>
+                        setSelectedDate(
+                          new Date(
+                            currentDate.getFullYear(),
+                            currentDate.getMonth(),
+                            day
+                          )
+                        )
+                      }
                       className={`aspect-square rounded-lg p-2 transition-all duration-200 ${
                         isSelectedDate(day)
-                          ? 'bg-gradient-to-br from-kawaii-rose to-kawaii-purple text-white shadow-kawaii scale-105'
+                          ? "bg-gradient-to-br from-kawaii-rose to-kawaii-purple text-white shadow-kawaii scale-105"
                           : isToday(day)
-                          ? 'bg-kawaii-pink text-white'
+                          ? "bg-kawaii-pink text-white"
                           : hasActiveSales
-                          ? 'bg-kawaii-pink/20 hover:bg-kawaii-pink/30'
-                          : 'hover:bg-gray-100'
+                          ? "bg-kawaii-pink/20 hover:bg-kawaii-pink/30"
+                          : "hover:bg-gray-100"
                       }`}
                     >
                       <div className="text-sm font-bold">{day}</div>
                       {hasActiveSales && (
                         <div className="text-xs mt-1">
-                          <div className={isSelectedDate(day) ? 'text-white' : 'text-kawaii-rose'}>
+                          <div
+                            className={
+                              isSelectedDate(day)
+                                ? "text-white"
+                                : "text-kawaii-rose"
+                            }
+                          >
                             {daySales.quantity}📦
                           </div>
                         </div>
@@ -218,11 +272,11 @@ const Calendar = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
               <h3 className="text-xl font-bold text-gray-800 mb-4">
-                {selectedDate.toLocaleDateString('es-CO', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                {selectedDate.toLocaleDateString("es-CO", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
                 })}
               </h3>
 
@@ -232,22 +286,72 @@ const Calendar = () => {
                   <div className="bg-gradient-to-r from-kawaii-pink to-kawaii-purple rounded-lg p-4 text-white">
                     <p className="text-sm text-white/90 mb-1">Total del Día</p>
                     <p className="text-2xl font-bold">
-                      {formatCurrency(SalesService.calculateTotal(selectedDaySales))}
+                      {formatCurrency(
+                        SalesService.calculateTotal(selectedDaySales)
+                      )}
                     </p>
                     <p className="text-sm text-white/90 mt-2">
-                      {selectedDaySales.length} {selectedDaySales.length === 1 ? 'venta' : 'ventas'}
+                      {selectedDaySales.length}{" "}
+                      {selectedDaySales.length === 1 ? "venta" : "ventas"}
                     </p>
+                  </div>
+
+                  {/* Payment Summary */}
+                  <div className="bg-white border border-kawaii-pink/40 rounded-lg p-4 shadow-sm mt-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">
+                      Métodos de Pago
+                    </p>
+
+                    {(() => {
+                      const stats = getPaymentStats(selectedDaySales);
+                      return (
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>💵 Efectivo</span>
+                            <span className="font-bold">
+                              {formatCurrency(stats.efectivo)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <span>🏦 Transferencia</span>
+                            <span className="font-bold">
+                              {formatCurrency(stats.transferencia)}
+                            </span>
+                          </div>
+
+                          <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
+                            <span>Total</span>
+                            <span>
+                              {formatCurrency(
+                                stats.efectivo + stats.transferencia
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Sales count by product */}
                   <div className="text-sm text-gray-600">
                     <p className="font-semibold mb-2">Resumen:</p>
-                    {SalesService.getProductStats(selectedDaySales).map((stat) => (
-                      <div key={stat.product.id} className="flex justify-between items-center py-1">
-                        <span>{stat.product.getIcon()} {stat.product.name} x{stat.quantity}</span>
-                        <span className="font-semibold">{formatCurrency(stat.total)}</span>
-                      </div>
-                    ))}
+                    {SalesService.getProductStats(selectedDaySales).map(
+                      (stat) => (
+                        <div
+                          key={stat.product.id}
+                          className="flex justify-between items-center py-1"
+                        >
+                          <span>
+                            {stat.product.getIcon()} {stat.product.name} x
+                            {stat.quantity}
+                          </span>
+                          <span className="font-semibold">
+                            {formatCurrency(stat.total)}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               ) : (
@@ -307,4 +411,3 @@ const Calendar = () => {
 };
 
 export default Calendar;
-

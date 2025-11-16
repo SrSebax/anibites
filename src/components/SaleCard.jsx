@@ -1,6 +1,6 @@
 import { Trash2, Calendar, Clock, Package } from 'lucide-react';
 
-const SaleCard = ({ sale, onDelete }) => {
+const SaleCard = ({ sale, onDelete, paymentMethodIcon }) => {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -36,6 +36,7 @@ const SaleCard = ({ sale, onDelete }) => {
 
       {/* Body */}
       <div className="p-4 space-y-3">
+
         {/* Cantidad */}
         <div className="flex items-center justify-between">
           <div className="flex items-center text-gray-600">
@@ -59,6 +60,14 @@ const SaleCard = ({ sale, onDelete }) => {
           </div>
         </div>
 
+        {/* Método de pago */}
+        <div className="flex items-center gap-2 bg-kawaii-cream rounded-lg p-3">
+          <span className="text-2xl">{paymentMethodIcon}</span>
+          <span className="text-gray-700 text-sm font-semibold">
+            {sale.paymentMethod}
+          </span>
+        </div>
+
         {/* Notas */}
         {sale.notes && (
           <div className="bg-kawaii-cream rounded-lg p-3">
@@ -77,10 +86,10 @@ const SaleCard = ({ sale, onDelete }) => {
             </span>
           </div>
         </div>
+
       </div>
     </div>
   );
 };
 
 export default SaleCard;
-

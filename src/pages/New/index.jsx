@@ -23,15 +23,22 @@ const New = () => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedProduct) return alert('Por favor selecciona un producto');
     if (quantity < 1) return alert('La cantidad debe ser mayor a 0');
+    // Mostrar modal de método de pago en lugar de enviar directamente
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentMethodSelect = async (paymentMethod) => {
+    setShowPaymentModal(false);
     setIsSubmitting(true);
     try {
       const saleDate = new Date(date);
-      await SalesService.addSale(selectedProduct, quantity, saleDate, notes);
+      await SalesService.addSale(selectedProduct, quantity, saleDate, notes, paymentMethod);
       setIsSubmitting(false);
       setShowSuccessModal(true);
       // Limpiar el formulario pero permanecer en la página
@@ -239,6 +246,41 @@ const New = () => {
             </div>
           )}
         </form>
+
+        {/* Modal de Método de Pago */}
+        {showPaymentModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fadeIn">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">¿Cómo fue el pago?</h2>
+              <p className="text-gray-600 text-center mb-6">Selecciona el método de pago para registrar la venta</p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => handlePaymentMethodSelect('Transferencia')}
+                  className="w-full py-4 bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-md flex items-center justify-center text-lg"
+                >
+                  <span className="mr-3 text-2xl">💳</span>
+                  Transferencia
+                </button>
+                
+                <button
+                  onClick={() => handlePaymentMethodSelect('Efectivo')}
+                  className="w-full py-4 bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-md flex items-center justify-center text-lg"
+                >
+                  <span className="mr-3 text-2xl">💵</span>
+                  Efectivo
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full mt-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
 
         <SuccessModal
           isOpen={showSuccessModal}

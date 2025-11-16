@@ -1,8 +1,27 @@
-import { useState, useEffect } from 'react';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Package, DollarSign, Calendar } from 'lucide-react';
-import { StatCard, EmptyState } from '../../components';
-import { SalesService } from '../../services';
+import { useState, useEffect } from "react";
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  TrendingUp,
+  Package,
+  DollarSign,
+  Calendar,
+  CalendarIcon,
+  BarChart3,
+} from "lucide-react";
+import { StatCard, EmptyState } from "../../components";
+import { SalesService } from "../../services";
 
 const Stats = () => {
   const [allSales, setAllSales] = useState([]);
@@ -12,12 +31,16 @@ const Stats = () => {
     totalQuantity: 0,
     monthTotal: 0,
     monthQuantity: 0,
-    averageDaily: 0
+    averageDaily: 0,
   });
   const [productStats, setProductStats] = useState([]);
   const [varietyStats, setVarietyStats] = useState([]);
   const [sizeStats, setSizeStats] = useState([]);
   const [dailySalesData, setDailySalesData] = useState([]);
+  const [paymentTotals, setPaymentTotals] = useState({
+    efectivo: 0,
+    transferencia: 0,
+  });
 
   useEffect(() => {
     loadStatistics();
@@ -27,7 +50,7 @@ const Stats = () => {
     try {
       // Cargar ventas desde Firebase
       await SalesService.loadSales();
-      
+
       const all = await SalesService.getAllSales();
       const month = SalesService.getCurrentMonthSales();
 
@@ -39,12 +62,13 @@ const Stats = () => {
         totalQuantity: SalesService.calculateTotalQuantity(all),
         monthTotal: SalesService.calculateTotal(month),
         monthQuantity: SalesService.calculateTotalQuantity(month),
-        averageDaily: SalesService.getAverageDailySales(month)
+        averageDaily: SalesService.getAverageDailySales(month),
       });
 
       setProductStats(SalesService.getProductStats(month));
       setVarietyStats(SalesService.getVarietyStats(month));
       setSizeStats(SalesService.getSizeStats(month));
+      setPaymentTotals(SalesService.getPaymentTotals(month));
 
       // Preparar datos para gráfico de ventas diarias (últimos 7 días)
       const last7Days = [];
@@ -53,26 +77,36 @@ const Stats = () => {
         date.setDate(date.getDate() - i);
         const sales = SalesService.getSalesByDate(date);
         last7Days.push({
-          date: date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' }),
+          date: date.toLocaleDateString("es-CO", {
+            weekday: "short",
+            day: "numeric",
+          }),
           total: SalesService.calculateTotal(sales),
-          quantity: SalesService.calculateTotalQuantity(sales)
+          quantity: SalesService.calculateTotalQuantity(sales),
         });
       }
       setDailySalesData(last7Days);
     } catch (error) {
-      console.error('Error al cargar estadísticas:', error);
+      console.error("Error al cargar estadísticas:", error);
     }
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
     }).format(value);
   };
 
-  const COLORS = ['#FF69B4', '#DDA0DD', '#FFB6C1', '#FF1493', '#DB7093', '#FFC0CB'];
+  const COLORS = [
+    "#FF69B4",
+    "#DDA0DD",
+    "#FFB6C1",
+    "#FF1493",
+    "#DB7093",
+    "#FFC0CB",
+  ];
 
   if (allSales.length === 0) {
     return (
@@ -93,12 +127,11 @@ const Stats = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-kawaii-rose to-kawaii-purple mb-2">
-            Estadísticas 📊
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-kawaii-rose to-kawaii-purple mb-2 flex items-center justify-center">
+            <BarChart3 className="mr-3 text-kawaii-rose" size={40} />
+            Estadísticas
           </h1>
-          <p className="text-gray-600">
-            Análisis detallado de tus ventas
-          </p>
+          <p className="text-gray-600">Análisis detallado de tus ventas</p>
         </div>
 
         {/* Overview Stats */}
@@ -127,6 +160,19 @@ const Stats = () => {
             icon="🎯"
             color="from-kawaii-rose to-pink-600"
           />
+          <StatCard
+            title="Efectivo"
+            value={formatCurrency(paymentTotals.efectivo)}
+            icon="💵"
+            color="from-yellow-400 to-yellow-600"
+          />
+
+          <StatCard
+            title="Transferencia"
+            value={formatCurrency(paymentTotals.transferencia)}
+            icon="🏦"
+            color="from-blue-400 to-blue-600"
+          />
         </div>
 
         {/* Charts Row 1 */}
@@ -144,8 +190,9 @@ const Stats = () => {
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => {
-                    if (name === 'total') return [formatCurrency(value), 'Total'];
-                    return [value, 'Unidades'];
+                    if (name === "total")
+                      return [formatCurrency(value), "Total"];
+                    return [value, "Unidades"];
                   }}
                 />
                 <Legend />
@@ -169,10 +216,15 @@ const Stats = () => {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={(entry) => `${entry.product.getSizeName()} ${entry.product.getVarietyName()}`}
+                  label={(entry) =>
+                    `${entry.product.getSizeName()} ${entry.product.getVarietyName()}`
+                  }
                 >
                   {productStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -199,18 +251,29 @@ const Stats = () => {
               </thead>
               <tbody>
                 {productStats.map((stat, index) => (
-                  <tr key={index} className="border-b border-gray-200 hover:bg-kawaii-pink/10 transition-colors">
+                  <tr
+                    key={index}
+                    className="border-b border-gray-200 hover:bg-kawaii-pink/10 transition-colors"
+                  >
                     <td className="py-3 px-4">
                       <div className="flex items-center">
-                        <span className="text-2xl mr-2">{stat.product.getIcon()}</span>
+                        <span className="text-2xl mr-2">
+                          {stat.product.getIcon()}
+                        </span>
                         <div>
                           <p className="font-semibold">{stat.product.name}</p>
-                          <p className="text-sm text-gray-600">{formatCurrency(stat.product.price)}</p>
+                          <p className="text-sm text-gray-600">
+                            {formatCurrency(stat.product.price)}
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td className="text-center py-3 px-4 font-semibold">{stat.sales}</td>
-                    <td className="text-center py-3 px-4 font-semibold">{stat.quantity}</td>
+                    <td className="text-center py-3 px-4 font-semibold">
+                      {stat.sales}
+                    </td>
+                    <td className="text-center py-3 px-4 font-semibold">
+                      {stat.quantity}
+                    </td>
                     <td className="text-right py-3 px-4 font-bold text-kawaii-rose">
                       {formatCurrency(stat.total)}
                     </td>
@@ -219,7 +282,9 @@ const Stats = () => {
                 <tr className="bg-gradient-to-r from-kawaii-pink/20 to-kawaii-purple/20 font-bold">
                   <td className="py-3 px-4">TOTAL</td>
                   <td className="text-center py-3 px-4">{monthSales.length}</td>
-                  <td className="text-center py-3 px-4">{stats.monthQuantity}</td>
+                  <td className="text-center py-3 px-4">
+                    {stats.monthQuantity}
+                  </td>
                   <td className="text-right py-3 px-4 text-kawaii-rose">
                     {formatCurrency(stats.monthTotal)}
                   </td>
@@ -236,12 +301,19 @@ const Stats = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-4">Por Tamaño</h2>
             <div className="space-y-3">
               {sizeStats.map((stat, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-kawaii-pink/10 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-kawaii-pink/10 rounded-lg"
+                >
                   <div>
                     <p className="font-semibold capitalize">{stat.size}</p>
-                    <p className="text-sm text-gray-600">{stat.quantity} unidades</p>
+                    <p className="text-sm text-gray-600">
+                      {stat.quantity} unidades
+                    </p>
                   </div>
-                  <p className="font-bold text-kawaii-rose">{formatCurrency(stat.total)}</p>
+                  <p className="font-bold text-kawaii-rose">
+                    {formatCurrency(stat.total)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -249,15 +321,24 @@ const Stats = () => {
 
           {/* Variety Stats */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Por Variedad</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Por Variedad
+            </h2>
             <div className="space-y-3">
               {varietyStats.map((stat, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-kawaii-purple/10 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-kawaii-purple/10 rounded-lg"
+                >
                   <div>
                     <p className="font-semibold capitalize">{stat.variety}</p>
-                    <p className="text-sm text-gray-600">{stat.quantity} unidades</p>
+                    <p className="text-sm text-gray-600">
+                      {stat.quantity} unidades
+                    </p>
                   </div>
-                  <p className="font-bold text-kawaii-rose">{formatCurrency(stat.total)}</p>
+                  <p className="font-bold text-kawaii-rose">
+                    {formatCurrency(stat.total)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -269,4 +350,3 @@ const Stats = () => {
 };
 
 export default Stats;
-

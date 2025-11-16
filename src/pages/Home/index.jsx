@@ -70,6 +70,17 @@ const Home = () => {
     }).format(value);
   };
 
+  const getPaymentMethodIcon = (method) => {
+    switch (method) {
+      case 'Transferencia':
+        return '💳';
+      case 'Efectivo':
+        return '💵';
+      default:
+        return '💰';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-kawaii-cream via-kawaii-pink/10 to-kawaii-purple/10">
       <div className="container mx-auto px-4 py-8">
@@ -148,6 +159,7 @@ const Home = () => {
                   key={sale.id}
                   sale={sale}
                   onDelete={handleDeleteSale}
+                  paymentMethodIcon={getPaymentMethodIcon(sale.paymentMethod)}
                 />
               ))}
             </div>
@@ -244,4 +256,3 @@ const Home = () => {
 };
 
 export default Home;
-
